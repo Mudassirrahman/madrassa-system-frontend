@@ -5,7 +5,7 @@ import axios from "axios";
 export const fetchStudents = createAsyncThunk("teacher/fetchStudents", async (_, { getState, rejectWithValue }) => {
   const token = getState().auth.user?.token;
   try {
-    const res = await axios.get("madrassa-system-backend.vercel.app/auth/students", {
+    const res = await axios.get("https://madrassa-system-backend.vercel.app/auth/students", {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data.students;
@@ -18,14 +18,14 @@ export const fetchStudents = createAsyncThunk("teacher/fetchStudents", async (_,
 export const fetchReports = createAsyncThunk("teacher/fetchReports", async (_, { getState, rejectWithValue }) => {
   const token = getState().auth.user?.token;
   try {
-    const res = await axios.get("madrassa-system-backend.vercel.app/reports/teacher", {
+    const res = await axios.get("https://madrassa-system-backend.vercel.app/reports/teacher", {
       headers: { Authorization: `Bearer ${token}` },
     });
 
     // Loop through reports and fetch comments for each report
     const reportsWithComments = await Promise.all(
       res.data.map(async (report) => {
-        const commentsRes = await axios.get(`madrassa-system-backend.vercel.app/comments/${report._id}`, {
+        const commentsRes = await axios.get(`https://madrassa-system-backend.vercel.app/comments/${report._id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         return {
@@ -45,7 +45,7 @@ export const fetchReports = createAsyncThunk("teacher/fetchReports", async (_, {
 export const createReport = createAsyncThunk("teacher/createReport", async (formData, { getState, rejectWithValue }) => {
   const token = getState().auth.user?.token;
   try {
-    const res = await axios.post("madrassa-system-backend.vercel.app/reports/teacher", formData, {
+    const res = await axios.post("https://madrassa-system-backend.vercel.app/reports/teacher", formData, {
       headers: { Authorization: `Bearer ${token}` },
     });
     return res.data.report;

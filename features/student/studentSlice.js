@@ -9,7 +9,7 @@ export const fetchStudentReports = createAsyncThunk(
   async (_, { getState, rejectWithValue }) => {
     const token = getState().auth.user?.token;
     try {
-      const res = await axios.get("madrassa-system-backend.vercel.app/reports/my", {
+      const res = await axios.get("https://madrassa-system-backend.vercel.app/reports/my", {
         headers: { Authorization: `Bearer ${token}` },
       });
       return res.data;

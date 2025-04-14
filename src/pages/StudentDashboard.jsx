@@ -17,16 +17,19 @@ const StudentDashboard = () => {
 
   const fetchComments = async (reportId) => {
     const token = user?.token;
-    const res = await axios.get(`madrassa-system-backend.vercel.app/${reportId}`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await axios.get(
+      `https://madrassa-system-backend.vercel.app/${reportId}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
     setComments((prev) => ({ ...prev, [reportId]: res.data }));
   };
 
   const handleCommentSubmit = async (reportId) => {
     const token = user?.token;
     await axios.post(
-      `madrassa-system-backend.vercel.app/${reportId}`,
+      `https://madrassa-system-backend.vercel.app/${reportId}`,
       { text: newComment[reportId] },
       { headers: { Authorization: `Bearer ${token}` } }
     );
@@ -43,15 +46,18 @@ const StudentDashboard = () => {
       {Array.isArray(reports) &&
         reports.map((report) => (
           <div key={report._id} className="card my-3 p-3">
-            <strong>Date:</strong> {new Date(report.createdAt).toLocaleDateString()} <br />
+            <strong>Date:</strong>{" "}
+            {new Date(report.createdAt).toLocaleDateString()} <br />
             <strong>Teacher:</strong> {report.teacher?.name} <br />
             <strong>Sabaq:</strong> {report.sabaq} <br />
             <strong>Sabqi:</strong> {report.sabqi} <br />
             <strong>Manzil:</strong> {report.manzil} <br />
-
             <hr />
             <h6>Comments:</h6>
-            <button className="btn btn-sm btn-secondary mb-2" onClick={() => fetchComments(report._id)}>
+            <button
+              className="btn btn-sm btn-secondary mb-2"
+              onClick={() => fetchComments(report._id)}
+            >
               Load Comments
             </button>
             <ul>
@@ -61,7 +67,6 @@ const StudentDashboard = () => {
                 </li>
               ))}
             </ul>
-
             <div className="mt-2">
               <input
                 className="form-control"
@@ -88,4 +93,3 @@ const StudentDashboard = () => {
 };
 
 export default StudentDashboard;
-
