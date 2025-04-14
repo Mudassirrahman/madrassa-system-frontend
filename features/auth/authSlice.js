@@ -23,7 +23,7 @@ const initialState = {
 // 🔐 LOGIN
 export const loginUser = createAsyncThunk('auth/loginUser', async (userData, { rejectWithValue }) => {
   try {
-    const response = await axios.post('http://localhost:8080/auth/login', userData);
+    const response = await axios.post('madrassa-system-backend.vercel.app/auth/login', userData);
     const { userName, role, token } = response.data;
     const user = { userName, role, token };
     localStorage.setItem('user', JSON.stringify(user));
@@ -37,7 +37,7 @@ export const loginUser = createAsyncThunk('auth/loginUser', async (userData, { r
 // 📝 REGISTER
 export const registerUser = createAsyncThunk('auth/registerUser', async (userData, { rejectWithValue }) => {
   try {
-    const response = await axios.post('http://localhost:8080/auth/register', userData);
+    const response = await axios.post('madrassa-system-backend.vercel.app/auth/register', userData);
     return response.data;
   } catch (error) {
     return rejectWithValue(error.response?.data?.message || 'Something went wrong');
