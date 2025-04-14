@@ -26,9 +26,9 @@ const TeacherDashboard = () => {
     dispatch(fetchReports());
   }, [dispatch]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    dispatch(createReport(formData));
+    await dispatch(createReport(formData));
     setFormData({
       student: "",
       sabaq: "",
@@ -38,6 +38,7 @@ const TeacherDashboard = () => {
       tareeqaSunaneKa: "",
       totalAyat: "",
     });
+    dispatch(fetchReports());
   };
 
   const handleChange = (e) => {
@@ -71,7 +72,14 @@ const TeacherDashboard = () => {
             </select>
           </div>
 
-          {["sabaq", "sabqi", "manzil", "aageKaSabaq", "tareeqaSunaneKa", "totalAyat"].map((field, idx) => (
+          {[
+            "sabaq",
+            "sabqi",
+            "manzil",
+            "aageKaSabaq",
+            "tareeqaSunaneKa",
+            "totalAyat",
+          ].map((field, idx) => (
             <div className="col-md-6 mb-3" key={idx}>
               <label className="form-label">
                 {field.charAt(0).toUpperCase() + field.slice(1)}
@@ -102,14 +110,28 @@ const TeacherDashboard = () => {
         <p>No reports found.</p>
       ) : (
         reports.map((report) => (
-          <div key={report._id} className="card my-2 p-3">
+          <div key={report._id || Math.random()} className="card my-3 p-3">
             <strong>Student:</strong> {report.student?.name || "N/A"} <br />
             <strong>Sabaq:</strong> {report.sabaq} <br />
             <strong>Sabqi:</strong> {report.sabqi} <br />
             <strong>Manzil:</strong> {report.manzil} <br />
             <strong>Aage ka Sabaq:</strong> {report.aageKaSabaq} <br />
             <strong>Tarika Sunane Ka:</strong> {report.tareeqaSunaneKa} <br />
-            <strong>Total Ayat:</strong> {report.totalAyat}
+            <strong>Total Ayat:</strong> {report.totalAyat} <br />
+            {/* 👇 Comment Section */}
+            {report.comments && report.comments.length > 0 ? (
+              report.comments.map((comment) => (
+                <div
+                  key={comment._id}
+                  className="mt-2 p-2 border rounded bg-light"
+                >
+                  <strong>{comment.user?.name || "Unknown"}:</strong>
+                  <p className="mb-0">{comment.text}</p>
+                </div>
+              ))
+            ) : (
+              <div className="mt-2 text-muted">No comment from student.</div>
+            )}
           </div>
         ))
       )}
@@ -118,4 +140,3 @@ const TeacherDashboard = () => {
 };
 
 export default TeacherDashboard;
-

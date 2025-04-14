@@ -14,14 +14,28 @@ export const fetchStudents = createAsyncThunk("teacher/fetchStudents", async (_,
   }
 });
 
-// 🟢 Fetch Reports
+// 🟢 Fetch Reports including Comments
 export const fetchReports = createAsyncThunk("teacher/fetchReports", async (_, { getState, rejectWithValue }) => {
   const token = getState().auth.user?.token;
   try {
     const res = await axios.get("http://localhost:8080/reports/teacher", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    return res.data.reports;
+
+    // Loop through reports and fetch comments for each report
+    const reportsWithComments = await Promise.all(
+      res.data.map(async (report) => {
+        const commentsRes = await axios.get(`http://localhost:8080/comments/${report._id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        return {
+          ...report,
+          comments: commentsRes.data, // Attach comments to the report
+        };
+      })
+    );
+
+    return reportsWithComments; // This will return reports with their comments
   } catch (err) {
     return rejectWithValue(err.response?.data || "Failed to fetch reports");
   }
