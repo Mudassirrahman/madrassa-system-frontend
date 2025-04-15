@@ -18,7 +18,7 @@ const StudentDashboard = () => {
   const fetchComments = async (reportId) => {
     const token = user?.token;
     const res = await axios.get(
-      `https://madrassa-system-backend.vercel.app/${reportId}`,
+      `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
       {
         headers: { Authorization: `Bearer ${token}` },
       }
@@ -29,7 +29,7 @@ const StudentDashboard = () => {
   const handleCommentSubmit = async (reportId) => {
     const token = user?.token;
     await axios.post(
-      `https://madrassa-system-backend.vercel.app/${reportId}`,
+      `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
       { text: newComment[reportId] },
       { headers: { Authorization: `Bearer ${token}` } }
     );
