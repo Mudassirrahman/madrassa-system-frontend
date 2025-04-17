@@ -40,54 +40,75 @@ const StudentDashboard = () => {
   return (
     <div className="container">
       <h2 className="my-4">Student Dashboard</h2>
-      <p>Welcome, {user?.name}</p>
-      <h4>Your Reports</h4>
+      <p>Welcome, {user?.userName}</p>
+      <h4 className="mb-4">Your Reports</h4>
 
-      {Array.isArray(reports) &&
-        reports.map((report) => (
-          <div key={report._id} className="card my-3 p-3">
-            <strong>Date:</strong>{" "}
-            {new Date(report.createdAt).toLocaleDateString()} <br />
-            <strong>Teacher:</strong> {report.teacher?.name} <br />
-            <strong>Sabaq:</strong> {report.sabaq} <br />
-            <strong>Sabqi:</strong> {report.sabqi} <br />
-            <strong>Manzil:</strong> {report.manzil} <br />
-            <hr />
-            <h6>Comments:</h6>
-            <button
-              className="btn btn-sm btn-secondary mb-2"
-              onClick={() => fetchComments(report._id)}
-            >
-              Load Comments
-            </button>
-            <ul>
-              {(comments[report._id] || []).map((c, i) => (
-                <li key={i}>
-                  <strong>{c.user?.name}:</strong> {c.text}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-2">
-              <input
-                className="form-control"
-                placeholder="Add a comment"
-                value={newComment[report._id] || ""}
-                onChange={(e) =>
-                  setNewComment((prev) => ({
-                    ...prev,
-                    [report._id]: e.target.value,
-                  }))
-                }
-              />
-              <button
-                className="btn btn-primary mt-1"
-                onClick={() => handleCommentSubmit(report._id)}
-              >
-                Submit Comment
-              </button>
+      <div className="row">
+        {Array.isArray(reports) &&
+          reports.map((report) => (
+            <div key={report._id} className="col-12 col-lg-6 mb-4">
+              <div className="card shadow-sm h-100">
+                <div className="card-body">
+                  <h5 className="card-title">Report Summary</h5>
+                  <p className="mb-1">
+                    <strong>Date:</strong>{" "}
+                    {new Date(report.createdAt).toLocaleDateString()}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Teacher:</strong> {report.teacher?.name}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Sabaq:</strong> {report.sabaq}
+                  </p>
+                  <p className="mb-1">
+                    <strong>Sabqi:</strong> {report.sabqi}
+                  </p>
+                  <p className="mb-3">
+                    <strong>Manzil:</strong> {report.manzil}
+                  </p>
+
+                  <hr />
+
+                  <h6>Comments:</h6>
+                  <button
+                    className="btn btn-sm btn-secondary mb-2"
+                    onClick={() => fetchComments(report._id)}
+                  >
+                    Load Comments
+                  </button>
+
+                  <ul className="ps-3">
+                    {(comments[report._id] || []).map((c, i) => (
+                      <li key={i}>
+                        <strong>{c.user?.name}:</strong> {c.text}
+                      </li>
+                    ))}
+                  </ul>
+
+                  <div className="mt-3">
+                    <input
+                      className="form-control"
+                      placeholder="Add a comment"
+                      value={newComment[report._id] || ""}
+                      onChange={(e) =>
+                        setNewComment((prev) => ({
+                          ...prev,
+                          [report._id]: e.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      className="btn btn-primary mt-2"
+                      onClick={() => handleCommentSubmit(report._id)}
+                    >
+                      Submit Comment
+                    </button>
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
+          ))}
+      </div>
     </div>
   );
 };
