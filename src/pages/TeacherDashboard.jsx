@@ -5,49 +5,161 @@ import {
   fetchReports,
   createReport,
 } from "../../features/teacher/teacherSlice";
+import paras from "../../data/paras";
+import surahs from "../../data/surahs";
 
 const TeacherDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const { students, reports } = useSelector((state) => state.teacher);
 
-  const [formData, setFormData] = useState({
+  const initialFormState = {
     student: "",
-    sabaq: "",
-    sabqi: "",
-    manzil: "",
-    aageKaSabaq: "",
+    sabaq: {
+      paraName: "",
+      suratName: "",
+      ayatFrom: "",
+      ayatTo: "",
+      mistakes: "",
+      mistakeAyatNumbers: "",
+    },
+    sabqi: {
+      paraName: "",
+      suratName: "",
+      rukuFrom: "",
+      rukuTo: "",
+      mistakes: "",
+      mistakeAyatNumbers: "",
+    },
+    manzil: {
+      paraName: "",
+      suratName: "",
+      totalRuku: "",
+      mistakes: "",
+      mistakeRukuNumbers: "",
+    },
+    aageKaSabaq: {
+      paraName: "",
+      suratName: "",
+      ayatFrom: "",
+      ayatTo: "",
+      totalAyat: "",
+    },
     tareeqaSunaneKa: "",
-    totalAyat: "",
-  });
+    overallPerformance: "",
+  };
 
-  const [selectedStudentId, setSelectedStudentId] = useState(""); // 🔸 New State for filtering reports
+  const [formData, setFormData] = useState(initialFormState);
+  const [selectedStudentId, setSelectedStudentId] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     dispatch(fetchStudents());
     dispatch(fetchReports());
   }, [dispatch]);
 
+  const handleChange = (e, section, field) => {
+    if (section) {
+      setFormData((prev) => ({
+        ...prev,
+        [section]: {
+          ...prev[section],
+          [field]: e.target.value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [e.target.name]: e.target.value,
+      }));
+    }
+  };
+
+  const isFormValid = () => {
+    if (!formData.student) return false;
+
+    for (const section of ["sabaq", "sabqi", "manzil", "aageKaSabaq"]) {
+      for (const field in formData[section]) {
+        if (
+          formData[section][field] === "" &&
+          !(
+            (field.toLowerCase().includes("mistake") ||
+              field.toLowerCase().includes("mistakeayatnumbers") ||
+              field.toLowerCase().includes("mistakerukunumbers")) &&
+            Number(formData[section]["mistakes"]) === 0
+          )
+        ) {
+          return false;
+        }
+      }
+    }
+
+    return (
+      formData.tareeqaSunaneKa.trim() !== "" &&
+      formData.overallPerformance.trim() !== ""
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await dispatch(createReport(formData));
-    setFormData({
-      student: "",
-      sabaq: "",
-      sabqi: "",
-      manzil: "",
-      aageKaSabaq: "",
-      tareeqaSunaneKa: "",
-      totalAyat: "",
-    });
+    if (!isFormValid()) {
+      setError("Please fill all required fields properly.");
+      return;
+    }
+
+    setError("");
+
+    const preparedData = {
+      ...formData,
+      sabaq: {
+        ...formData.sabaq,
+        mistakes: Number(formData.sabaq.mistakes),
+        ayatFrom: Number(formData.sabaq.ayatFrom),
+        ayatTo: Number(formData.sabaq.ayatTo),
+        mistakeAyatNumbers:
+          Number(formData.sabaq.mistakes) === 0
+            ? []
+            : formData.sabaq.mistakeAyatNumbers
+                .split(",")
+                .map((n) => Number(n.trim())),
+      },
+      sabqi: {
+        ...formData.sabqi,
+        mistakes: Number(formData.sabqi.mistakes),
+        rukuFrom: Number(formData.sabqi.rukuFrom),
+        rukuTo: Number(formData.sabqi.rukuTo),
+        mistakeAyatNumbers:
+          Number(formData.sabqi.mistakes) === 0
+            ? []
+            : formData.sabqi.mistakeAyatNumbers
+                .split(",")
+                .map((n) => Number(n.trim())),
+      },
+      manzil: {
+        ...formData.manzil,
+        mistakes: Number(formData.manzil.mistakes),
+        totalRuku: Number(formData.manzil.totalRuku),
+        mistakeRukuNumbers:
+          Number(formData.manzil.mistakes) === 0
+            ? []
+            : formData.manzil.mistakeRukuNumbers
+                .split(",")
+                .map((n) => Number(n.trim())),
+      },
+      aageKaSabaq: {
+        ...formData.aageKaSabaq,
+        ayatFrom: Number(formData.aageKaSabaq.ayatFrom),
+        ayatTo: Number(formData.aageKaSabaq.ayatTo),
+        totalAyat: Number(formData.aageKaSabaq.totalAyat),
+      },
+    };
+
+    await dispatch(createReport(preparedData));
     dispatch(fetchReports());
+
+    setFormData(initialFormState);
   };
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  // 🔸 Filtered Reports based on selected student
   const filteredReports = selectedStudentId
     ? reports.filter((report) => report.student?._id === selectedStudentId)
     : reports;
@@ -58,139 +170,315 @@ const TeacherDashboard = () => {
       <p>Welcome, {user?.userName}</p>
 
       <h4>Create New Report</h4>
+      {error && <div className="alert alert-danger">{error}</div>}
       <form onSubmit={handleSubmit}>
-        <div className="row">
-          <div className="col-md-6 mb-3">
-            <label className="form-label">Student</label>
-            <select
-              className="form-select"
-              name="student"
-              value={formData.student}
-              onChange={handleChange}
-              required
-            >
-              <option value="">Select Student</option>
-              {Array.isArray(students) &&
-                students.map((stu) => (
-                  <option key={stu._id} value={stu._id}>
-                    {stu.name}
-                  </option>
-                ))}
-            </select>
-          </div>
+        <div className="mb-3">
+          <label className="form-label">Student</label>
+          <select
+            className="form-select"
+            name="student"
+            value={formData.student}
+            onChange={handleChange}
+            required
+          >
+            <option value="">Select Student</option>
+            {students.map((stu) => (
+              <option key={stu._id} value={stu._id}>
+                {stu.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-          {[
-            "sabaq",
-            "sabqi",
-            "manzil",
-            "aageKaSabaq",
-            "tareeqaSunaneKa",
-            "totalAyat",
-          ].map((field, idx) => (
-            <div className="col-md-6 mb-3" key={idx}>
-              <label className="form-label">
-                {field.charAt(0).toUpperCase() + field.slice(1)}
-              </label>
-              <input
-                type={field === "totalAyat" ? "number" : "text"}
-                className="form-control"
-                name={field}
-                value={formData[field]}
-                onChange={handleChange}
-                required
-              />
+        <div className="row">
+          {["sabaq", "sabqi", "manzil", "aageKaSabaq"].map((section) => (
+            <div className="col-12 col-md-6 col-lg-3 mb-3" key={section}>
+              <div className="card shadow-sm">
+                <div className="card-body">
+                  <h5 className="card-title text-capitalize">
+                    {section} Section
+                  </h5>
+
+                  {/* Para Name Dropdown */}
+                  <div className="mb-2">
+                    <label className="form-label">Para Name</label>
+                    <select
+                      className="form-select"
+                      value={formData[section].paraName}
+                      onChange={(e) => handleChange(e, section, "paraName")}
+                    >
+                      <option value="">Select Para</option>
+                      {paras.map((para, idx) => (
+                        <option key={idx} value={para.name}>
+                          {para.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Surat Name Dropdown */}
+                  <div className="mb-2">
+                    <label className="form-label">Surat Name</label>
+                    <select
+                      className="form-select"
+                      value={formData[section].suratName}
+                      onChange={(e) => handleChange(e, section, "suratName")}
+                    >
+                      <option value="">Select Surat</option>
+                      {surahs.map((surah, idx) => (
+                        <option key={idx} value={surah.name}>
+                          {surah.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {Object.keys(formData[section]).map((field) => {
+                    if (field === "paraName" || field === "suratName")
+                      return null;
+                    const isMistakeField =
+                      field.toLowerCase().includes("mistakeayatnumbers") ||
+                      field.toLowerCase().includes("mistakerukunumbers");
+                    const mistakeCount = Number(formData[section]["mistakes"]);
+                    if (isMistakeField && mistakeCount === 0) return null;
+
+                    return (
+                      <div className="mb-2" key={field}>
+                        <label className="form-label">
+                          {field.charAt(0).toUpperCase() + field.slice(1)}
+                        </label>
+                        <input
+                          type={
+                            field.includes("mistake") ||
+                            field.includes("From") ||
+                            field.includes("To") ||
+                            field.includes("total")
+                              ? "number"
+                              : "text"
+                          }
+                          className="form-control"
+                          value={formData[section][field]}
+                          onChange={(e) => handleChange(e, section, field)}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           ))}
         </div>
 
-        <button className="btn btn-primary" type="submit">
+        <div className="mb-3">
+          <label className="form-label">Tareeqa Sunane Ka</label>
+          <input
+            type="text"
+            name="tareeqaSunaneKa"
+            className="form-control"
+            value={formData.tareeqaSunaneKa}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="mb-3">
+          <label className="form-label">Overall Performance</label>
+          <input
+            type="text"
+            name="overallPerformance"
+            className="form-control"
+            value={formData.overallPerformance}
+            onChange={handleChange}
+          />
+        </div>
+
+        <button type="submit" className="btn btn-primary">
           Submit Report
         </button>
       </form>
 
       <hr />
 
-      <h4 className="mb-3">View Reports</h4>
-
-      {/* 🔽 Dropdown to select student for viewing reports */}
-      <div className="mb-4">
-        <label className="form-label">Filter Reports by Student</label>
+      <h4>Reports</h4>
+      <div className="mb-3">
+        <label className="form-label">Filter by Student</label>
         <select
           className="form-select"
           value={selectedStudentId}
           onChange={(e) => setSelectedStudentId(e.target.value)}
         >
           <option value="">All Students</option>
-          {Array.isArray(students) &&
-            students.map((stu) => (
-              <option key={stu._id} value={stu._id}>
-                {stu.name}
-              </option>
-            ))}
+          {students.map((stu) => (
+            <option key={stu._id} value={stu._id}>
+              {stu.name}
+            </option>
+          ))}
         </select>
       </div>
 
-      {!Array.isArray(filteredReports) ? (
-        <p>Loading reports...</p>
-      ) : filteredReports.length === 0 ? (
-        <p>No reports found.</p>
-      ) : (
-        <div className="row">
-          {filteredReports.map((report) => (
-            <div
-              key={report._id || Math.random()}
-              className="col-12 col-lg-6 mb-4"
-            >
-              <div className="card shadow-sm h-100">
-                <div className="card-body">
-                  <h5 className="card-title">Report Details</h5>
-                  <p className="mb-1">
-                    <strong>Student:</strong> {report.student?.name || "N/A"}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Sabaq:</strong> {report.sabaq}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Sabqi:</strong> {report.sabqi}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Manzil:</strong> {report.manzil}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Aage ka Sabaq:</strong> {report.aageKaSabaq}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Tarika Sunane Ka:</strong> {report.tareeqaSunaneKa}
-                  </p>
-                  <p className="mb-3">
-                    <strong>Total Ayat:</strong> {report.totalAyat}
-                  </p>
+      {filteredReports.map((report) => (
+        <div key={report._id || Math.random()}>
+          <div className="border rounded p-4 mb-4 shadow-sm bg-light">
+            <h5 className="text-primary mb-3">Report ID: {report._id}</h5>
+            <p>
+              <strong>Student:</strong> {report.student?.name}
+            </p>
 
-                  {/* 👇 Comment Section */}
-                  <div>
-                    <strong>Comments:</strong>
-                    {report.comments && report.comments.length > 0 ? (
-                      report.comments.map((comment) => (
-                        <div
-                          key={comment._id}
-                          className="mt-2 p-2 border rounded bg-light"
-                        >
-                          <strong>{comment.user?.name || "Unknown"}:</strong>
-                          <p className="mb-0">{comment.text}</p>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="mt-2 text-muted">
-                        No comment from student.
-                      </div>
+            {/* === Internal Section Cards (Sabaq, Sabqi, etc) === */}
+            <div className="row ">
+              <div className="mt-4 col-12 col-md-6 col-lg-4">
+                <div className="card shadow-sm mb-3">
+                  <div className="card-header bg-primary text-white">
+                    <h6>📖 Sabaq</h6>
+                  </div>
+                  <div className="card-body">
+                    <p>
+                      <strong>Para:</strong> {report.sabaq?.paraName}
+                    </p>
+                    <p>
+                      <strong>Surat:</strong> {report.sabaq?.suratName}
+                    </p>
+                    <p>
+                      <strong>Ayat From:</strong> {report.sabaq?.ayatFrom}
+                    </p>
+                    <p>
+                      <strong>Ayat To:</strong> {report.sabaq?.ayatTo}
+                    </p>
+                    <p>
+                      <strong>Mistakes:</strong> {report.sabaq?.mistakes}
+                    </p>
+                    {report.sabaq?.mistakes > 0 && (
+                      <p>
+                        <strong>Mistake Ayat Numbers:</strong>{" "}
+                        {report.sabaq?.mistakeAyatNumbers?.join(", ")}
+                      </p>
                     )}
                   </div>
                 </div>
               </div>
+
+              {/* Sabqi Section */}
+              <div className="mt-4 col-12 col-md-6 col-lg-4">
+                <div className="card shadow-sm mb-3">
+                  <div className="card-header bg-info text-white">
+                    <h6>🔁 Sabqi</h6>
+                  </div>
+                  <div className="card-body">
+                    <p>
+                      <strong>Para:</strong> {report.sabqi?.paraName}
+                    </p>
+                    <p>
+                      <strong>Surat:</strong> {report.sabqi?.suratName}
+                    </p>
+                    <p>
+                      <strong>Ruku From:</strong> {report.sabqi?.rukuFrom}
+                    </p>
+                    <p>
+                      <strong>Ruku To:</strong> {report.sabqi?.rukuTo}
+                    </p>
+                    <p>
+                      <strong>Mistakes:</strong> {report.sabqi?.mistakes}
+                    </p>
+                    {report.sabqi?.mistakes > 0 && (
+                      <p>
+                        <strong>Mistake Ayat Numbers:</strong>{" "}
+                        {report.sabqi?.mistakeAyatNumbers?.join(", ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Manzil Section */}
+              <div className="mt-4 col-12 col-md-6 col-lg-4">
+                <div className="card shadow-sm mb-3">
+                  <div className="card-header bg-warning text-dark">
+                    <h6>🏛️ Manzil</h6>
+                  </div>
+                  <div className="card-body">
+                    <p>
+                      <strong>Para:</strong> {report.manzil?.paraName}
+                    </p>
+                    <p>
+                      <strong>Surat:</strong> {report.manzil?.suratName}
+                    </p>
+                    <p>
+                      <strong>Total Ruku:</strong> {report.manzil?.totalRuku}
+                    </p>
+                    <p>
+                      <strong>Mistakes:</strong> {report.manzil?.mistakes}
+                    </p>
+                    {report.manzil?.mistakes > 0 && (
+                      <p>
+                        <strong>Mistake Ruku Numbers:</strong>{" "}
+                        {report.manzil?.mistakeRukuNumbers?.join(", ")}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Aage Ka Sabaq */}
+              <div className="mt-4 col-12 col-md-6 col-lg-4">
+                <div className="card shadow-sm mb-3">
+                  <div className="card-header bg-success text-white">
+                    <h6>📘 Aage Ka Sabaq</h6>
+                  </div>
+                  <div className="card-body">
+                    <p>
+                      <strong>Para:</strong> {report.aageKaSabaq?.paraName}
+                    </p>
+                    <p>
+                      <strong>Surat:</strong> {report.aageKaSabaq?.suratName}
+                    </p>
+                    <p>
+                      <strong>Ayat From:</strong> {report.aageKaSabaq?.ayatFrom}
+                    </p>
+                    <p>
+                      <strong>Ayat To:</strong> {report.aageKaSabaq?.ayatTo}
+                    </p>
+                    <p>
+                      <strong>Total Ayat:</strong>{" "}
+                      {report.aageKaSabaq?.totalAyat}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Feedback Section */}
+              <div className="mt-4 col-12 col-md-6 col-lg-4">
+                <div className="card shadow-sm mb-3">
+                  <div className="card-header bg-secondary text-white">
+                    <h6>🗣️ General Feedback</h6>
+                  </div>
+                  <div className="card-body">
+                    <p>
+                      <strong>Tareeqa Sunane Ka:</strong>{" "}
+                      {report.tareeqaSunaneKa}
+                    </p>
+                    <p>
+                      <strong>Overall Performance:</strong>{" "}
+                      {report.overallPerformance}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              {report.comments && report.comments.length > 0 ? (
+                report.comments.map((comment) => (
+                  <div
+                    key={comment._id}
+                    className="mt-2 p-2 border rounded bg-light"
+                  >
+                    <strong>{comment.user?.name || "Unknown"}:</strong>
+                    <p className="mb-0">{comment.text}</p>
+                  </div>
+                ))
+              ) : (
+                <div className="mt-2 text-muted">No comment from student.</div>
+              )}
             </div>
-          ))}
+          </div>
         </div>
-      )}
+      ))}
     </div>
   );
 };

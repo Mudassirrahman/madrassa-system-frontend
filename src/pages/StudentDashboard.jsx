@@ -1,40 +1,26 @@
 import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { fetchStudentReports } from "../../features/student/studentSlice";
-import axios from "axios";
+import {
+  fetchStudentReports,
+  fetchComments,
+  submitComment,
+} from "../../features/student/studentSlice";
 
 const StudentDashboard = () => {
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
-  const { reports } = useSelector((state) => state.student);
+  const { reports, comments, loading } = useSelector((state) => state.student);
 
-  const [comments, setComments] = useState({}); // reportId -> comments
-  const [newComment, setNewComment] = useState({}); // reportId -> text
+  const [newComment, setNewComment] = useState({});
 
   useEffect(() => {
     dispatch(fetchStudentReports());
   }, [dispatch]);
 
-  const fetchComments = async (reportId) => {
-    const token = user?.token;
-    const res = await axios.get(
-      `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-    setComments((prev) => ({ ...prev, [reportId]: res.data }));
-  };
-
-  const handleCommentSubmit = async (reportId) => {
-    const token = user?.token;
-    await axios.post(
-      `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
-      { text: newComment[reportId] },
-      { headers: { Authorization: `Bearer ${token}` } }
-    );
+  const handleCommentSubmit = (reportId) => {
+    if (!newComment[reportId]) return;
+    dispatch(submitComment({ reportId, text: newComment[reportId] }));
     setNewComment((prev) => ({ ...prev, [reportId]: "" }));
-    fetchComments(reportId);
   };
 
   return (
@@ -43,6 +29,8 @@ const StudentDashboard = () => {
       <p>Welcome, {user?.userName}</p>
       <h4 className="mb-4">Your Reports</h4>
 
+      {loading && <p>Loading your reports...</p>}
+
       <div className="row">
         {Array.isArray(reports) &&
           reports.map((report) => (
@@ -50,29 +38,54 @@ const StudentDashboard = () => {
               <div className="card shadow-sm h-100">
                 <div className="card-body">
                   <h5 className="card-title">Report Summary</h5>
-                  <p className="mb-1">
+                  <p>
                     <strong>Date:</strong>{" "}
                     {new Date(report.createdAt).toLocaleDateString()}
                   </p>
-                  <p className="mb-1">
-                    <strong>Teacher:</strong> {report.teacher?.name}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Sabaq:</strong> {report.sabaq}
-                  </p>
-                  <p className="mb-1">
-                    <strong>Sabqi:</strong> {report.sabqi}
-                  </p>
-                  <p className="mb-3">
-                    <strong>Manzil:</strong> {report.manzil}
+                  <p>
+                    <strong>Teacher:</strong> {report.teacher?.userName || "N/A"}
                   </p>
 
                   <hr />
+                  <h6>Sabaq</h6>
+                  <p>Para: {report.sabaq?.paraName}</p>
+                  <p>Surat: {report.sabaq?.suratName}</p>
+                  <p>Ayat: {report.sabaq?.ayatFrom} - {report.sabaq?.ayatTo}</p>
+                  <p>Mistakes: {report.sabaq?.mistakes}</p>
+                  <p>Mistake Ayat Numbers: {report.sabaq?.mistakeAyatNumbers?.join(", ")}</p>
 
+                  <hr />
+                  <h6>Sabqi</h6>
+                  <p>Para: {report.sabqi?.paraName}</p>
+                  <p>Surat: {report.sabqi?.suratName}</p>
+                  <p>Ruku: {report.sabqi?.rukuFrom} - {report.sabqi?.rukuTo}</p>
+                  <p>Mistakes: {report.sabqi?.mistakes}</p>
+                  <p>Mistake Ayat Numbers: {report.sabqi?.mistakeAyatNumbers?.join(", ")}</p>
+
+                  <hr />
+                  <h6>Manzil</h6>
+                  <p>Para: {report.manzil?.paraName}</p>
+                  <p>Surat: {report.manzil?.suratName}</p>
+                  <p>Total Ruku: {report.manzil?.totalRuku}</p>
+                  <p>Mistakes: {report.manzil?.mistakes}</p>
+                  <p>Mistake Ruku Numbers: {report.manzil?.mistakeRukuNumbers?.join(", ")}</p>
+
+                  <hr />
+                  <h6>Aage Ka Sabaq</h6>
+                  <p>Para: {report.aageKaSabaq?.paraName}</p>
+                  <p>Surat: {report.aageKaSabaq?.suratName}</p>
+                  <p>Ayat: {report.aageKaSabaq?.ayatFrom} - {report.aageKaSabaq?.ayatTo}</p>
+                  <p>Total Ayat: {report.aageKaSabaq?.totalAyat}</p>
+
+                  <hr />
+                  <p><strong>Tareeqa Sunane Ka:</strong> {report.tareeqaSunaneKa}</p>
+                  <p><strong>Overall Performance:</strong> {report.overallPerformance}</p>
+
+                  <hr />
                   <h6>Comments:</h6>
                   <button
                     className="btn btn-sm btn-secondary mb-2"
-                    onClick={() => fetchComments(report._id)}
+                    onClick={() => dispatch(fetchComments(report._id))}
                   >
                     Load Comments
                   </button>
@@ -80,7 +93,7 @@ const StudentDashboard = () => {
                   <ul className="ps-3">
                     {(comments[report._id] || []).map((c, i) => (
                       <li key={i}>
-                        <strong>{c.user?.name}:</strong> {c.text}
+                        <strong>{c.user?.userName || "Anonymous"}:</strong> {c.text}
                       </li>
                     ))}
                   </ul>

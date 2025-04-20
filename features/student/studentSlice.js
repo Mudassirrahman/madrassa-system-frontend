@@ -1,9 +1,7 @@
-// features/student/studentSlice.js
-
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import axios from "axios";
 
-// ✅ Thunk: Student ki reports fetch karna
+// ✅ Reports Thunk
 export const fetchStudentReports = createAsyncThunk(
   "student/fetchReports",
   async (_, { getState, rejectWithValue }) => {
@@ -17,9 +15,43 @@ export const fetchStudentReports = createAsyncThunk(
       );
       return res.data;
     } catch (err) {
-      return rejectWithValue(
-        err.response?.data || "Failed to fetch student reports"
+      return rejectWithValue(err.response?.data || "Failed to fetch reports");
+    }
+  }
+);
+
+// ✅ Comments Thunks
+export const fetchComments = createAsyncThunk(
+  "student/fetchComments",
+  async (reportId, { getState, rejectWithValue }) => {
+    const token = getState().auth.user?.token;
+    try {
+      const res = await axios.get(
+        `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        }
       );
+      return { reportId, comments: res.data };
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to fetch comments");
+    }
+  }
+);
+
+export const submitComment = createAsyncThunk(
+  "student/submitComment",
+  async ({ reportId, text }, { getState, dispatch, rejectWithValue }) => {
+    const token = getState().auth.user?.token;
+    try {
+      await axios.post(
+        `https://madrassa-system-backend.vercel.app/comments/${reportId}`,
+        { text },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      dispatch(fetchComments(reportId)); // auto-refresh comments
+    } catch (err) {
+      return rejectWithValue(err.response?.data || "Failed to submit comment");
     }
   }
 );
@@ -27,6 +59,7 @@ export const fetchStudentReports = createAsyncThunk(
 // ✅ Initial State
 const initialState = {
   reports: [],
+  comments: {}, // reportId -> comments[]
   loading: false,
   error: null,
 };
@@ -35,9 +68,7 @@ const initialState = {
 const studentSlice = createSlice({
   name: "student",
   initialState,
-  reducers: {
-    // Yahan future reducers add ho saktay hain
-  },
+  reducers: {},
   extraReducers: (builder) => {
     builder
       .addCase(fetchStudentReports.pending, (state) => {
@@ -51,9 +82,13 @@ const studentSlice = createSlice({
       .addCase(fetchStudentReports.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+
+      .addCase(fetchComments.fulfilled, (state, action) => {
+        const { reportId, comments } = action.payload;
+        state.comments[reportId] = comments;
       });
   },
 });
 
-// ✅ Export
 export default studentSlice.reducer;
