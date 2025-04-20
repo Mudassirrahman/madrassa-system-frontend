@@ -321,7 +321,7 @@ const TeacherDashboard = () => {
             <h5 className="text-primary mb-3">
   Report ID: {`${report._id.slice(0, 4)}...${report._id.slice(-5)}`}
 </h5>
-              <strong>Student:</strong> {report.student?.name}
+              <p><strong>Student:</strong> {report.student?.name}
             </p>
 
             {/* === Internal Section Cards (Sabaq, Sabqi, etc) === */}
