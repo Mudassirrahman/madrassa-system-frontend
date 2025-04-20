@@ -43,7 +43,7 @@ const StudentDashboard = () => {
                     {new Date(report.createdAt).toLocaleDateString()}
                   </p>
                   <p>
-                    <strong>Teacher:</strong> {report.teacher?.userName || "N/A"}
+                    <strong>Teacher:</strong> {report.teacher?.name || "N/A"}
                   </p>
 
                   <hr />
