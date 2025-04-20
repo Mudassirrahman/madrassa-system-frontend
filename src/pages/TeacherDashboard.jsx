@@ -318,8 +318,9 @@ const TeacherDashboard = () => {
       {filteredReports.map((report) => (
         <div key={report._id || Math.random()}>
           <div className="border rounded p-4 mb-4 shadow-sm bg-light">
-            <h5 className="text-primary mb-3">Report ID: {report._id}</h5>
-            <p>
+            <h5 className="text-primary mb-3">
+  Report ID: {`${report._id.slice(0, 4)}...${report._id.slice(-5)}`}
+</h5>
               <strong>Student:</strong> {report.student?.name}
             </p>
 
