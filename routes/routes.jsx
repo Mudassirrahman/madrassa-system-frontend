@@ -6,12 +6,17 @@ import NotFound from "../src/pages/NotFound";
 import Login from "../src/pages/Login";
 import Signup from "../src/pages/Signup";
 import ProtectedRoute from "../src/components/ProtectedRoute/ProtectedRoute";
+import Landing from "../src/pages/Landing";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     element: <App />,
     children: [
+       {
+        path: "", 
+        element: <Landing />,
+      },
       {
         path: "login",
         element: <Login />,
